@@ -65,7 +65,7 @@ app.post("/messages", async (req, res) => {
           WHERE conv_id = $1
             AND isSave = FALSE
           ORDER BY timestamp ASC
-          OFFSET 20     -- on supprime tout ce qui dépasse les 20 plus récents
+          OFFSET 20
       )
       `,
       [conv_id]
