@@ -35,25 +35,50 @@ app.get("/messages", async (req, res) => {
 
 // POST messages
 app.post("/messages", async (req, res) => {
-  const { conv_id, text, timestamp, sender } = req.body;
+  const { conv_id, text, timestamp, sender, isSave, param } = req.body;
 
   if (!conv_id || !text || !timestamp) {
     return res.status(400).send("Missing required fields");
   }
 
   try {
+    // Ajout du message
     await pool.query(
-      `INSERT INTO messages (conv_id, text, timestamp, sender)
-       VALUES ($1, $2, $3, $4)`,
-      [conv_id, text, timestamp, sender || null]
+      `INSERT INTO messages (conv_id, text, timestamp, sender, isSave, param)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        conv_id,
+        text,
+        timestamp,
+        sender || null,
+        isSave ?? false,       
+        param ?? {}            
+      ]
+    );
+
+    // Nettoyage : garder les 20 derniers messages NON sauvegardés
+    await pool.query(
+      `
+      DELETE FROM messages
+      WHERE id NOT IN (
+        SELECT id FROM messages
+        WHERE conv_id = $1
+          AND isSave = FALSE
+        ORDER BY timestamp DESC
+        LIMIT 20
+      )
+      AND conv_id = $1
+      AND isSave = FALSE
+      `,
+      [conv_id]
     );
 
     res.send("OK");
-  } catch (e) {
-  console.error("DATABASE ERROR:", e.message);
-  res.status(500).send("Erreur serveur");
-}
 
+  } catch (e) {
+    console.error("DATABASE ERROR:", e.message);
+    res.status(500).send("Erreur serveur");
+  }
 });
 
 
