@@ -51,22 +51,24 @@ app.post("/messages", async (req, res) => {
         text,
         timestamp,
         sender || null,
-        isSave ?? false,
-        param ?? {}
+        isSave ?? false,       
+        param ?? {}            
       ]
     );
 
-    // Suppression des vieux messages NON-sauvegardés (garder uniquement les 20 derniers)
+    // Nettoyage : garder les 20 derniers messages NON sauvegardés
     await pool.query(
       `
       DELETE FROM messages
-      WHERE id IN (
-          SELECT id FROM messages
-          WHERE conv_id = $1
-            AND isSave = FALSE
-          ORDER BY timestamp ASC
-          OFFSET 20
+      WHERE id NOT IN (
+        SELECT id FROM messages
+        WHERE conv_id = $1
+          AND isSave = FALSE
+        ORDER BY timestamp DESC
+        LIMIT 20
       )
+      AND conv_id = $1
+      AND isSave = FALSE
       `,
       [conv_id]
     );
@@ -74,7 +76,11 @@ app.post("/messages", async (req, res) => {
     res.send("OK");
 
   } catch (e) {
-    console.error("DATABASE ERROR:", e);
+    console.error("DATABASE ERROR:", e.message);
     res.status(500).send("Erreur serveur");
   }
 });
+
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Volpina API running on port ${PORT}`));
