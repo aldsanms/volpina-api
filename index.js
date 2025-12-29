@@ -142,6 +142,45 @@ app.delete("/conversations/:id", async (req, res) => {
   }
 });
 
+app.get("/conversations", async (req, res) => {
+  const { userId } = req.query;
+  if (!userId) return res.sendStatus(400);
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT
+        conv_id,
+        text AS last_message,
+        timestamp AS last_time
+      FROM (
+        SELECT
+          conv_id,
+          text,
+          timestamp,
+          ROW_NUMBER() OVER (
+            PARTITION BY conv_id
+            ORDER BY timestamp DESC
+          ) AS rn
+        FROM messages
+        WHERE conv_id IN (
+          SELECT DISTINCT conv_id
+          FROM messages
+          WHERE sender = $1
+        )
+      ) t
+      WHERE rn = 1
+      ORDER BY last_time DESC
+      `,
+      [userId]
+    );
+
+    res.json(result.rows);
+  } catch (e) {
+    console.error(e);
+    res.sendStatus(500);
+  }
+});
 
 
 const PORT = process.env.PORT || 3000;
