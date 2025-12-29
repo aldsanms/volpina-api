@@ -97,6 +97,38 @@ app.post("/messages/:id/save", async (req, res) => {
   }
 });
 
+// Unsave messages
+app.post("/messages/:id/unsave", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await pool.query(
+      "UPDATE messages SET issave = false WHERE id = $1",
+      [id]
+    );
+    res.sendStatus(200);
+  } catch (e) {
+    console.error(e);
+    res.sendStatus(500);
+  }
+});
+
+// Drop messages
+app.post("/messages/:id/drop", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await pool.query(
+      "DELETE FROM messages WHERE id = $1",
+      [id]
+    );
+    res.sendStatus(200);
+  } catch (e) {
+    console.error(e);
+    res.sendStatus(500);
+  }
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Volpina API running on port ${PORT}`));
