@@ -113,8 +113,8 @@ app.post("/messages/:id/unsave", async (req, res) => {
   }
 });
 
-// Drop messages
-app.post("/messages/:id/drop", async (req, res) => {
+// Delete messages
+app.delete("/messages/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -128,6 +128,7 @@ app.post("/messages/:id/drop", async (req, res) => {
     res.sendStatus(500);
   }
 });
+
 
 
 const PORT = process.env.PORT || 3000;
