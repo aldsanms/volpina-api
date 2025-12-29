@@ -129,6 +129,19 @@ app.delete("/messages/:id", async (req, res) => {
   }
 });
 
+app.delete("/conversations/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await pool.query("DELETE FROM messages WHERE conv_id = $1", [id]);
+
+    res.sendStatus(200);
+  } catch (e) {
+    console.error(e);
+    res.sendStatus(500);
+  }
+});
+
 
 
 const PORT = process.env.PORT || 3000;
