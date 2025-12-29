@@ -142,34 +142,29 @@ app.delete("/conversations/:id", async (req, res) => {
   }
 });
 
-app.get("/conversations", async (req, res) => {
-  const { userId } = req.query;
-  if (!userId) return res.sendStatus(400);
+app.get("/conversation-last-time/:convId", async (req, res) => {
+  const { convId } = req.params;
 
   try {
     const result = await pool.query(
       `
-      SELECT
-        conv_id,
-        MAX(timestamp) AS last_time
+      SELECT MAX(timestamp) AS last_time
       FROM messages
-      WHERE conv_id IN (
-        SELECT DISTINCT conv_id
-        FROM messages
-        WHERE sender = $1
-      )
-      GROUP BY conv_id
-      ORDER BY last_time DESC
+      WHERE conv_id = $1
       `,
-      [userId]
+      [convId]
     );
 
-    res.json(result.rows);
+    res.json({
+      conv_id: convId,
+      last_time: result.rows[0].last_time
+    });
   } catch (e) {
     console.error(e);
     res.sendStatus(500);
   }
 });
+
 
 
 
